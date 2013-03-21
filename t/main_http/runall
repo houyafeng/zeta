@@ -1,0 +1,6 @@
+#!/bin/bash
+
+rm -fr *.log
+export PERL5LIB=/home/hary/workspace/zeta/lib:/home/hary/workspace/zeta/t/main_http
+../../bin/zeta -f zeta.conf
+
