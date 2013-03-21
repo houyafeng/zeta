@@ -7,13 +7,13 @@ zeta运行原理
 
 
 1、规范
-    0.1、应用的HOME目录是$APP_HOME
-    0.2、主要配置文件:
-         0.2.1、$APP_HOME/conf/zeta.conf         : zeta主配置文件
-         0.2.2、$APP_HOME/libexec/main.pl        : 主控模块loop钩子函数
-         0.2.3、$APP_HOME/libexec/plugin.pl      : 插件钩子, 负责加载helper
-         0.2.4、$APP_HOME/libexec/module-A.pl    : 模块A的loop函数
-         0.2.5、$APP_HOME/libexec/module-B.pl    : 模块B的loop函数
+    1.1、应用的HOME目录是$APP_HOME
+    1.2、主要配置文件:
+         1.2.1、$APP_HOME/conf/zeta.conf         : zeta主配置文件
+         1.2.2、$APP_HOME/libexec/main.pl        : 主控模块loop钩子函数
+         1.2.3、$APP_HOME/libexec/plugin.pl      : 插件钩子, 负责加载helper
+         1.2.4、$APP_HOME/libexec/module-A.pl    : 模块A的loop函数
+         1.2.5、$APP_HOME/libexec/module-B.pl    : 模块B的loop函数
 
 2、读配置文件$APP_HOME/conf/zeta.conf, 配置文件里主要包含以下信息：
     2.1、kernel配置
@@ -45,5 +45,6 @@ zeta运行原理
     4.1、每个子进程要么用exec对应的文件执行exec($efile)， 
     4.2、要么调用code.pl返回的loop函数指针
 
-4、zeta然后调用main.pl返回的函数指针
+5、zeta然后调用main.pl返回的函数指针
    
+
