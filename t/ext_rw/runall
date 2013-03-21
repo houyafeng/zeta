@@ -1,5 +1,0 @@
-#!/bin/bash
-
-export PERL5LIB=/home/hary/workspace/zeta/lib
-../../bin/zeta -f zeta.conf
-
