@@ -1,0 +1,185 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+use Getopt::Long;
+use POSIX qw/pause/;
+use Carp;
+use Zeta::Run;
+use Data::Dump;
+use Zeta::IniParse qw/ini_parse/;
+
+#
+#  debug测试 -- 环境变量ZETA_DEBUG
+#
+#  命令行参数处理
+my $cfg_file;
+my $rtn = GetOptions( "file|f=s" => \$cfg_file,);
+unless($rtn){
+    &usage;
+    exit 0;
+}
+
+unless( -f $cfg_file) {
+    warn "file $cfg_file does not exists";
+    &usage;
+    exit 0;
+}
+
+# 解析zeta配置文件 
+my $zcfg = do $cfg_file or &usage and confess "can not do file $cfg_file";
+warn "zeta.conf:\n" if $ENV{ZETA_DEBUG};
+Data::Dump->dump($zcfg) if $ENV{ZETA_DEBUG};
+
+# [kernel] section 配置文件
+my $kcfg = delete $zcfg->{kernel};  # kernel配置段
+
+# 检查args
+my $args = delete $kcfg->{args};
+unless($args) {
+    $args = [];
+}
+unless( 'ARRAY' eq ref $args) {
+    die "invalid kernel->args";
+}
+
+# main处理
+my $main_file = delete $kcfg->{main};
+my $main;
+unless(defined $main_file) {
+   $main = sub {
+       while(1) { pause(); };
+   }
+}
+else {
+    unless( -f $main_file ) {
+        die "file[$main_file] invalid"; 
+    }
+    $main = do $main_file or confess "can not do file[$main_file] error[$@]";
+}
+
+# 检查channel
+$kcfg->{channel} ||= [];
+unless( 'ARRAY' eq ref $kcfg->{channel}) {
+    die "invalid kernel->channel";
+}
+
+#
+# 模块参数配置 
+# para    => [ qw/A B C file.conf/ ],
+# reader  => 'II',
+# mreader => [ qw/X Y Z/ ],
+# mwriter => [ qw/T U W/ ],
+# size    => 2,
+# code    => "${apphome}/code.pl",
+# exec    => "${apphome}/exec.pl"
+#
+my $mcfg = delete $zcfg->{module};
+for my $mname (keys %$mcfg) {
+    my $m = $mcfg->{$mname};
+    $m->{para}    ||= [];
+    $m->{mwriter} ||= [];
+    $m->{mreader} ||= [];
+    $m->{size}    ||= 1; 
+
+    if ($m->{code} && $m->{exec}) {
+        confess "[$mname] code and exec are mutual execlusive";
+    }
+
+    if ($m->{code})  {
+        my $cref = do $m->{code} or  croak "can not do file[$m->{code}] error[$@]";
+        confess "[$mname] code for $mname is not cref" unless 'CODE' eq ref $cref;
+        $m->{code} = $cref;
+    }
+    else {
+       unless( $m->{exec} ) {
+          confess "[$mname] exec and code both don't exist";
+       }
+       unless( -f $m->{exec} ) {
+           confess "[$mname] file $m->{exec} does not exist";
+       } 
+    }
+}
+
+# 件文件
+my $pcfg = delete $kcfg->{plugin};
+
+# 启动 kernel
+zkernel->launch($kcfg);
+
+# 加载插件
+if ( $pcfg ) {
+    if ( -f $pcfg) {
+       do $pcfg or die "can not do file[$pcfg] error[$@]";
+    }
+    else {
+       die "plugin file[$pcfg] does not exists";
+    }
+}
+
+# 运行
+zkernel->run(
+    {
+        main   => $main,
+        args   => $args,
+        module => $mcfg
+    }
+);
+
+
+sub usage {
+    my $usage =<<EOF;
+    zeta -f[--file] zeta.conf
+EOF
+    warn $usage;
+}
+
+
+
+__END__
+################################################
+# ----------------------------------------------
+# 属性定义
+# ----------------------------------------------
+# [property]
+# apphome = /home/hary/workspace/zbp
+#
+# ----------------------------------------------
+# 核心配置
+# 1. context为主进程与子进程共享资源模块，
+#    do context.pl 必须返回一个href or aref 
+# 2. main为主控函数，do main.pl必须返回cref
+# ----------------------------------------------
+# [kernel]
+# apphome       -- 项目home ~/workspace/myprj
+# pidfile       -- ${apphome}/log/myprj.pid
+# mode          -- process_tree  前台模式
+#                  logger        后台模式
+#                  loggerd       后台模式+Loggerd子进程
+# logger_name   -- loggerd模式下Loggerd进程的名称
+# logurl        -- 主日志的日志路径
+# loglevel      -- 日志级别
+# chnl          -- 管道列表: chnl_a chnl_b
+# name          -- 主进程显示名称: Zprg
+# plugin        -- plugin.pl 
+# main          -- main.pl 
+# args          -- 
+#
+# ----------------------------------------------
+# 模块配置 
+#  1  code, exec只能配置一个
+#  2  do code.pl 必须返回一个cref 
+#  3  自身是个可执行模块  
+# ----------------------------------------------
+# [module]
+# reader    --  从哪里读
+# writer    --  往哪里写
+# mreader   --  multi reader
+# mwriter   --  multi writer
+# code      --  code.pl,
+# exec      --  exec.pl, 
+# para      --  参数[]
+# reap      --  回收
+# size      --  启动几个进程
+################################################
+
