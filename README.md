@@ -5,7 +5,6 @@ perl library for process management, IPC, logging etc...
 
 zeta运行原理
 
-
 1、规范
     1.1、应用的HOME目录是$APP_HOME
     1.2、主要配置文件:
@@ -47,4 +46,3 @@ zeta运行原理
 
 5、zeta然后调用main.pl返回的函数指针
    
-
