@@ -6,7 +6,9 @@ perl library for process management, IPC, logging etc...
 zeta运行原理
 
 1、规范
+
     1.1、应用的HOME目录是$APP_HOME
+
     1.2、主要配置文件:
          1.2.1、$APP_HOME/conf/zeta.conf         : zeta主配置文件
          1.2.2、$APP_HOME/libexec/main.pl        : 主控模块loop钩子函数
@@ -15,6 +17,7 @@ zeta运行原理
          1.2.5、$APP_HOME/libexec/module-B.pl    : 模块B的loop函数
 
 2、读配置文件$APP_HOME/conf/zeta.conf, 配置文件里主要包含以下信息：
+
     2.1、kernel配置
          2.1.1、pid文件
          2.1.2、运行模式:process_tree, logger, loggerd
@@ -36,13 +39,16 @@ zeta运行原理
          2.2.9、size: 次模块启动几个进程
 
 3、读完配置后, zeta会加载:
-    plugin.pl   可以在plugin.pl放置你的helper函数   : 这将给zkernel增加一些helper
-    code.pl     你的模块函数                        : 返回一个函数指针,模块的loop函数
-    main.pl     主控函数文件                        : 主控函数指针
+    
+    3.1、plugin.pl   可以在plugin.pl放置你的helper函数   : 这将给zkernel增加一些helper
+    3.2、code.pl     你的模块函数                        : 返回一个函数指针,模块的loop函数
+    3.3、main.pl     主控函数文件                        : 主控函数指针
 
 4、zeta为每个模块fork相应数量的子进程, 同时:
+
     4.1、每个子进程要么用exec对应的文件执行exec($efile)， 
     4.2、要么调用code.pl返回的loop函数指针
 
 5、zeta然后调用main.pl返回的函数指针
    
+
