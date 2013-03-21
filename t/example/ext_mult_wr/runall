@@ -2,5 +2,5 @@
 
 rm -fr *.log;
 export PERL5LIB=/home/hary/workspace/zeta/lib
-../../bin/zeta -f zeta.conf
+../../../bin/zeta -f zeta.conf
 
