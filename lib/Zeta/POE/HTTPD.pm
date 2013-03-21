@@ -1,4 +1,4 @@
-package Zeta::Run::Main::HTTP;
+package Zeta::POE::HTTPD;
 
 use Zeta::Run;
 use POE;
@@ -18,7 +18,8 @@ use JSON::XS;
 #    para    => 'xxx.cfg',
 # )
 #
-sub run {
+sub spawn {
+
     my $class = shift;
     my $args  = {@_};
 
@@ -106,13 +107,6 @@ sub run {
             }
         },
     );
-
-    # 运行poe
-    $poe_kernel->run();
-
-    zlogger->error("can not create qadmin with $cfg->{qadmin}");
-    zkernel->process_stopall();
-    exit 0;
 }
 
 
