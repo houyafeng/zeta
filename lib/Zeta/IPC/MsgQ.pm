@@ -6,9 +6,9 @@ use warnings;
 use Carp qw/cluck/;
 use IPC::SysV qw(IPC_NOWAIT MSG_NOERROR S_IRUSR S_IWUSR IPC_CREAT IPC_EXCL IPC_STAT IPC_RMID);
 
-################################################
-# ��ӵ���Ϣ����
-################################################
+#
+# 
+#
 sub new {
     my $class = shift;
     my $key   = shift;
@@ -38,9 +38,9 @@ sub new {
 
 }
 
-################################################
 #
-################################################
+#
+#
 sub delete {
     my $class_self = shift;
     my $id         = shift;
@@ -167,9 +167,10 @@ __END__
   use strict;
 
   my $q = Zeta::IPC::MsgQ->new(999000);
-  my $msg;
+  my $data;
+  my $type;
   while(1) {
-    $q->recv(\$data);
+    $q->recv(\$data \$type);
     $msg = substr($data, 0, $Config{longsize});  # remove msgtype;
     warn "got msg[$msg]\n";
   }
