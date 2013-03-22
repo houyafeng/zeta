@@ -82,23 +82,30 @@ sub send {
 }
 
 #
-# $q->msgrcv(\$data, $mtype);
+# $q->msgrcv(\$data, \$mtype);
 #
 sub recv {
-    my $self = shift;
-    my ( $dref, $mtype ) = @_;
 
+    my $self = shift;
+    my ( $dref, $tref ) = @_;
+
+    my $mtype = $$tref;
     $mtype ||= 0;
 
-  RETRY:
-    unless ( msgrcv( $$self, $$dref, 8192, $mtype, MSG_NOERROR ) ) {
+RETRY:
+    unless ( msgrcv( $$self, $$dref, 8192, $$tref, MSG_NOERROR ) ) {
         if ( $! =~ /Interrupted system call/ ) {
             goto RETRY;
         }
         cluck "msgrcv error";
         return;
     }
+    ($mtype , $$dref) = unpack("l!a*", $$dref);
+    if ($tref) {
+        $$tref = $mtype;
+    }
     return $self;
+
 }
 
 #

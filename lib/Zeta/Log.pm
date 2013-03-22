@@ -16,7 +16,9 @@ use File::Basename;
 use IO::Socket::INET;
 use File::Path qw/mkpath/;
 
+use Zeta::IPC::MsgQ;
 
+# static data
 my %lmap = (
    debug => [ 'DEBUG->', 5 ],
    info  => [ 'INFO-->', 4 ],
@@ -98,6 +100,9 @@ sub new {
     }
     if ( exists $config{'logurl'} ) {
         $logc->{'logurl'} = $config{'logurl'};
+    }
+    if ( exists $config{'monq'} ) {
+        $logc->{'monq'} = $config{'monq'};
     }
 
     #
@@ -275,9 +280,15 @@ sub new {
         exit 0;
     }
 
+    # 监控队列
+    if ( $logc->{monq} ) {
+        $self->{monq} = Zeta::IPC::MsgQ->new($logc->{monq});
+    }
+
     {
         no strict 'refs';
         no warnings 'redefine';
+        my $mlevel = $lmap{info}->[1];  # 监控报警级别
         for my $name ( keys %lmap ) {
             my $level  = $lmap{$name}->[1];
             my $prefix = $lmap{$name}->[0];
@@ -285,9 +296,20 @@ sub new {
             *{ __PACKAGE__ . "::$name" } = sub {
                 my $self = shift;
                 my ( $pkg, $line ) = (caller)[ 1, 2 ];
-
+                
+                # 写日志文件
                 if ( $self->{'loglevel'} >= $level ) {
                     $self->print_log( $pkg, $line, $prefix, @_ );
+                }
+                # 发送报警信息到监控队列
+                if ($level < $mlevel) {
+                    my $mod = $0;
+                    $self->{monq}->send(<<EOF, $$);
+module  : [$mod] 
+package : [$pkg] 
+line    : [$line] 
+errmsg  : [@_]
+EOF
                 }
                 return $self;
             };
