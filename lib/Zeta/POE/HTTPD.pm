@@ -17,14 +17,22 @@ use JSON::XS;
 #    module => 'XXX::Admin',
 #    para    => 'xxx.cfg',
 # )
+# -----------------------------------
+# (
+#    lfd     => $lfd,
+#    module  => 'XXX::Admin',
+#    para    => 'xxx.cfg',
+# )
 #
 sub spawn {
 
     my $class = shift;
     my $args  = {@_};
 
-    confess "port needed" unless $args->{port};
-    confess "module needed" unless $args->{module};
+    unless($args->{lfd}) {
+        confess "port needed" unless $args->{port};
+        confess "module needed" unless $args->{module};
+    }
 
     # 加载管理模块
     eval "use $args->{module};";
@@ -38,7 +46,7 @@ sub spawn {
         inline_states => {
             _start => sub {
                 $_[HEAP]{la} = POE::Wheel::ListenAccept->new(
-                    Handle => IO::Socket::INET->new(
+                    Handle => $args->{lfd} || IO::Socket::INET->new(
                         LocalPort => $args->{port},
                         Listen    => 5,
                     ),
