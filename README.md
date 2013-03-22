@@ -50,5 +50,9 @@ zeta运行原理
     4.2、要么调用code.pl返回的loop函数指针
 
 5、zeta然后调用main.pl返回的函数指针
+
+
+have a try!!!!
+good luck!!!
    
 
