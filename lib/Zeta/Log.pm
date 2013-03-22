@@ -546,6 +546,7 @@ __END__
   my $l3 = Zeta::Log->new(
     loglevel  => 'DEBUG',
     logurl    => 'file://$A_HOME/a.log',
+    monq      => 9898,      # monitor queue for warning!!!!
   ) or die "can not Zeta::Log->new";
   
   $l3->debug("this is a debug");

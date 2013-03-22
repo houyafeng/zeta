@@ -53,7 +53,18 @@ zeta运行原理
 5、zeta然后调用main.pl返回的函数指针
 
 
-have a try!!!!
-good luck!!!
+zeta tutorial
+====
+
+1、任务描述
+
+
+2、开始建立应用结构
+
+
+3、开始配置、开发
+
+
+4、观察日志、运行、停止
    
 
