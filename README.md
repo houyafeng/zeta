@@ -58,8 +58,36 @@ zeta tutorial
 
 1、任务描述
 
+   有一个消息队列， 2个模块分别为Zdispatch, Zworker.
+   Zdispatch : 负责从消息队列中读取任务，通过管道分发给Zworker模块
+   Zworker   : 负责处理Zdispatch分发的任务
+   
+   下面将描述zeta框架如何简化应用开发。 根据前面描述，zeta将会产生如下进程树:
+   Zeta
+     |         
+     |        消息队列
+     |          || 
+     |          || 
+     |         \||/
+     |   --------------
+     |---|Zdispatch.0 |
+     |---|Zdispatch.1 |.>..>..>..>.>.
+     |---|Zdispatch.N |             .
+     |   --------------            \./  
+     |                              . 通过管道
+     |   --------------            \./
+     |---|Zdispatch.0 |             .
+     |---|Zdispatch.1 |.<.<..<..<..<.
+     |---|Zdispatch.N |
+     |   --------------
+     |
+ ------------
+ |  主控loop|
+ |----------|
 
 2、开始建立应用结构
+
+   2.1、建立应用目录mkdir -p conf etc libexec plugin log sbin 
 
 
 3、开始配置、开发
