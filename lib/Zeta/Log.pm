@@ -16,12 +16,15 @@ use File::Basename;
 use IO::Socket::INET;
 use File::Path qw/mkpath/;
 
-sub DEBUG { 5 }
-sub INFO  { 4 }
-sub WARN  { 3 }
-sub ERROR { 2 }
-sub FATAL { 1 }
-sub CRIT  { 0 }
+
+my %lmap = (
+   debug => [ 'DEBUG->', 5 ],
+   info  => [ 'INFO-->', 4 ],
+   warn  => [ 'WARN-->', 3 ],
+   error => [ 'ERROR->', 2 ],
+   fatal => [ 'FATAL->', 1 ],
+   crit  => [ 'CRIT-->', 0 ],
+);
 
 #
 # usage example:
@@ -71,14 +74,6 @@ sub new {
     my $logdata;
     my $logall;
     my $logc;
-    my %ll = (
-        'DEBUG' => 5,
-        'INFO'  => 4,
-        'WARN'  => 3,
-        'ERROR' => 2,
-        'FATAL' => 1,
-        'CRIT'  => 0,
-    );
 
     #
     # read config from config file
@@ -117,7 +112,7 @@ sub new {
             $logdata->{'loglevel'} = $logc->{'loglevel'};
         }
         else {
-            $logdata->{'loglevel'} = $ll{ $logc->{'loglevel'} };
+            $logdata->{'loglevel'} = $lmap{ lc $logc->{'loglevel'} }->[1];
         }
         unless ( defined $logdata->{'loglevel'} ) {
             warn "$0:$$> loglevel illegal";
@@ -222,8 +217,7 @@ sub new {
     }
     my $self = bless $logdata, $class;
 
-    $self->open_log()
-      ;  # only file:///dir  and logserver://user@password/ip:port need open_log
+    $self->open_log();  # only file:///dir  and logserver://user@password/ip:port need open_log
 
     #
     # 专用日志进程
@@ -279,7 +273,25 @@ sub new {
             }
         }
         exit 0;
+    }
 
+    {
+        no strict 'refs';
+        no warnings 'redefine';
+        for my $name ( keys %lmap ) {
+            my $level  = $lmap{$name}->[1];
+            my $prefix = $lmap{$name}->[0];
+
+            *{ __PACKAGE__ . "::$name" } = sub {
+                my $self = shift;
+                my ( $pkg, $line ) = (caller)[ 1, 2 ];
+
+                if ( $self->{'loglevel'} >= $level ) {
+                    $self->print_log( $pkg, $line, $prefix, @_ );
+                }
+                return $self;
+            };
+        }
     }
 
     return $self;
@@ -392,20 +404,14 @@ sub loglevel {
         return $self->{'loglevel'};
     }
 
-    if ( $level =~ /[1-5]/ ) {
+    # 传入的是数字
+    if ( $level =~ /[0-5]/ ) {
         $self->{'loglevel'} = $level;
         return $self;
     }
 
-    my %ll = (
-        'DEBUG' => 5,
-        'INFO'  => 4,
-        'WARN'  => 3,
-        'ERROR' => 2,
-        'FATAL' => 2,
-        'CRIT'  => 1,
-    );
-    $self->{'loglevel'} = $ll{$level};
+    # 传入的是DEBUG ...
+    $self->{'loglevel'} = $lmap{lc $level}->[1];
 
     return $self;
 
@@ -419,144 +425,14 @@ sub logfh {
     return $self->{'logfh'};
 }
 
-sub access {
-
-    my $self = shift;
-
-    if ( $self->{loglevel} < INFO ) {
-        return;
-    }
-
-    #
-    # 采用本地文件
-    #
-    if ( $self->{'proto'} =~ /^file/ ) {
-        unless ( -f $self->{'address'} ) {    # 发生logrotate
-            my $logfh = IO::File->new(">> $self->{'address'}");
-            autoflush $logfh, 1;
-            $self->{'logfh'} = $logfh;
-        }
-    }
-
-    #
-    # 输出日志
-    #
-    my ( $y, $m, $d, $H, $M, $S ) = (localtime)[ 5, 4, 3, 2, 1, 0 ];
-    unless (
-        $self->{'logfh'}->print(
-            sprintf(
-                "[%4d-%02d-%02d %02d:%02d:%02d] ",
-                $y + 1900, $m + 1, $d,    # YYYY-MM-DD
-                $H,        $M,     $S
-            ),                            # HH:MM:SS
-            "@_\n"
-        )
-      )
-    {
-        $self->open_log();
-    }
-
-    return $self;
-
-}
-
-sub trace {
-
-    my $self = shift;
-
-    #
-    # 采用本地文件
-    #
-    if ( $self->{'proto'} =~ /^file/ ) {
-        unless ( -f $self->{'address'} ) {    # 发生logrotate
-            my $logfh = IO::File->new(">> $self->{'address'}");
-            autoflush $logfh, 1;
-            $self->{'logfh'} = $logfh;
-        }
-    }
-
-    #
-    # 输出日志
-    #
-    my ( $y, $m, $d, $H, $M, $S ) = (localtime)[ 5, 4, 3, 2, 1, 0 ];
-    unless (
-        $self->{'logfh'}->print(
-            sprintf(
-                "[%4d-%02d-%02d %02d:%02d:%02d] ",
-                $y + 1900, $m + 1, $d,    # YYYY-MM-DD
-                $H,        $M,     $S
-            ),                            # HH:MM:SS
-            "@_\n"
-        )
-      )
-    {
-        $self->open_log();
-    }
-
-    return $self;
-}
-
-sub debug {
-    my $self = shift;
-
-    my ( $pkg, $line ) = (caller)[ 1, 2 ];
-
-    if ( $self->{'loglevel'} >= DEBUG ) {
-        $self->print_log( $pkg, $line, 'DEBUG->', @_ );
-    }
-    return $self;
-}
-
+#
+# debug hex log
+#
 sub debug_hex {
     my $self = shift;
-    if ( $self->{'loglevel'} >= DEBUG ) {
+    if ( $self->{'loglevel'} >= $lmap{debug}->[1] ) {
         $self->{logfh}->print( hexdump( $_[0], { suppress_warnings => 1 } ) )
           if defined $_[0];
-    }
-    return $self;
-}
-
-sub info {
-    my $self = shift;
-    my ( $pkg, $line ) = (caller)[ 1, 2 ];
-    if ( $self->{'loglevel'} >= INFO ) {
-        $self->print_log( $pkg, $line, 'INFO-->', @_ );
-    }
-    return $self;
-}
-
-sub warn {
-    my $self = shift;
-    my ( $pkg, $line ) = (caller)[ 1, 2 ];
-    if ( $self->{'loglevel'} >= WARN ) {
-        $self->print_log( $pkg, $line, 'WARN-->', @_ );
-    }
-    return $self;
-}
-
-sub error {
-    my $self = shift;
-    my ( $pkg, $line ) = (caller)[ 1, 2 ];
-    if ( $self->{'loglevel'} >= ERROR ) {
-        $self->print_log( $pkg, $line, 'ERROR->', @_ );
-    }
-    return $self;
-}
-
-sub fatal {
-    my $self = shift;
-    my ( $pkg, $line ) = (caller)[ 1, 2 ];
-    if ( $self->{'loglevel'} >= FATAL ) {
-        $self->print_log( $pkg, $line, 'FATAL->', @_ );
-    }
-    return $self;
-}
-
-sub crit {
-    my $self = shift;
-    my ( $pkg, $line ) = (caller)[ 1, 2 ];
-    if ( $self->{'loglevel'} >= CRIT ) {
-        $self->print_log( $pkg, $line, 'CRIT-->', @_ );
     }
     return $self;
 }
