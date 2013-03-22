@@ -302,7 +302,7 @@ sub new {
                     $self->print_log( $pkg, $line, $prefix, @_ );
                 }
                 # 发送报警信息到监控队列
-                if ($level < $mlevel) {
+                if ($self->{monq} && $level < $mlevel) {
                     my $mod = $0;
                     $self->{monq}->send(<<EOF, $$);
 module  : [$mod] 

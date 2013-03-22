@@ -73,6 +73,8 @@ unless( 'ARRAY' eq ref $kcfg->{channel}) {
 # size    => 2,
 # code    => "${apphome}/code.pl",
 # exec    => "${apphome}/exec.pl"
+# plugin  => { db => [], xx => [] }
+# 
 #
 my $mcfg = delete $zcfg->{module};
 for my $mname (keys %$mcfg) {

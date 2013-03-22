@@ -244,6 +244,14 @@ helper process_run => sub {
         local $SIG{CHLD} = 'IGNORE';
         local $SIG{HUP}  = 'DEFAULT';
 
+        # child-process plugin load
+        my $plugin = $args->{'plugin'};
+        Data::Dump->dump($plugin);
+        for ( keys %$plugin) {
+            $self->load_plugin($_);
+            $self->init_plugin($_, $plugin->{$_});
+        } 
+
         # Ö´ÐÐ
         $code->($para);
         exit 0;
