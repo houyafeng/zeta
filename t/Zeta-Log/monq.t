@@ -12,3 +12,4 @@ my $logger = Zeta::Log->new(
 $logger->debug("test");
 $logger->info("test");
 $logger->crit("test");
+$logger->fatal("fatal test");

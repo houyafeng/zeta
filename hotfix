@@ -1,9 +1,0 @@
-#!/usr/bin/perl
-
-warn "this is a hotfix added by houyafeng";
-warn "another fix";
-warn "third fix";
-
-warn "houyafeng";
-
-

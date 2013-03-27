@@ -167,7 +167,9 @@ sub load_plugin {
 # use Carp qw/cluck/;
 sub init_plugin {
     my ($self, $name) = (shift, shift);
-    $plugin{$name}->(@_);
+    if ('CODE' eq ref $plugin{$name} ) {
+        $plugin{$name}->(@_);
+    }
 }
 
 1;

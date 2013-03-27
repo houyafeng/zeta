@@ -302,7 +302,7 @@ sub new {
                     $self->print_log( $pkg, $line, $prefix, @_ );
                 }
                 # 发送报警信息到监控队列
-                if ($level < $mlevel) {
+                if ($self->{monq} && $level < $mlevel) {
                     my $mod = $0;
                     $self->{monq}->send(<<EOF, $$);
 module  : [$mod] 
@@ -546,6 +546,7 @@ __END__
   my $l3 = Zeta::Log->new(
     loglevel  => 'DEBUG',
     logurl    => 'file://$A_HOME/a.log',
+    monq      => 9898,      # monitor queue for warning!!!!
   ) or die "can not Zeta::Log->new";
   
   $l3->debug("this is a debug");
