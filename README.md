@@ -59,10 +59,13 @@ zeta tutorial
 1、任务描述
 
    有一个消息队列， 2个模块分别为Zdispatch, Zworker.
+
    Zdispatch : 负责从消息队列中读取任务，通过管道分发给Zworker模块
+
    Zworker   : 负责处理Zdispatch分发的任务
    
    下面将描述zeta框架如何简化应用开发。 根据前面描述，zeta将会产生如下进程树:
+
    Zeta
      |         
      |        消息队列
@@ -87,11 +90,30 @@ zeta tutorial
 
 2、开始建立应用结构
 
-   2.1、建立应用目录mkdir -p conf etc libexec plugin log sbin 
-
+   2.1、建立应用目录
+  
+       mkdir -p conf etc libexec plugin log sbin 
 
 3、开始配置、开发
 
+    3.1、etc设置 
+        进入etc目录, vi profile.mak, 添加:
+        export ZETA_HOME=zeta安装目录
+        export TAPP_HOME=你的zeta应用的home目录
+        export PERL5LIB=$ZETA_HOME/lib:$TAPP_HOME/lib
+        export PATH=$ZETA_HOME/bin:$TAPP_HOME/bin:$PATH
+
+    3.2、conf设置, 进入conf目录
+        3.2.1、编辑应用主配置文件tapp.conf
+            {
+               qkey => 9898,
+            };
+
+        3.2.2、编辑zeta主配置文件zeta.conf
+            {
+                 kernel => {}
+            }
+        
 
 4、观察日志、运行、停止
    
